@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chinh Phục Bảng Tuần Hoàn - Hóa học 10</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: '#1e3a8a', // blue-900
+                        secondary: '#0d9488', // teal-600
+                        accent: '#9333ea', // purple-600
+                        gold: '#fbbf24', // amber-400
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15); }
+        .btn-hover { transition: all 0.3s ease; }
+        .btn-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .btn-press:active { transform: translateY(1px); }
+        
+        /* Hiệu ứng chuyển cảnh */
+        .screen { display: none; opacity: 0; transition: opacity 0.4s ease; }
+        .screen.active { display: flex; opacity: 1; }
+        
+        /* Bảng tuần hoàn CSS Grid */
+        .pt-grid { display: grid; grid-template-columns: repeat(18, 1fr); gap: 4px; padding: 10px; overflow-x: auto; min-width: 800px; }
+        .pt-element { 
+            aspect-ratio: 1; border-radius: 4px; padding: 2px; text-align: center; cursor: pointer; 
+            transition: all 0.2s; border: 1px solid rgba(0,0,0,0.1); position: relative;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .pt-element:hover { transform: scale(1.1); z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-color: #000; }
+        .pt-z { font-size: 0.6rem; position: absolute; top: 2px; left: 4px; opacity: 0.8;}
+        .pt-sym { font-size: 1.1rem; font-weight: bold; }
+        
+        /* Màu các nhóm nguyên tố */
+        .type-alkali { background-color: #fca5a5; } /* Đỏ nhạt */
+        .type-alkaline-earth { background-color: #fdba74; } /* Cam nhạt */
+        .type-transition { background-color: #fde047; } /* Vàng nhạt */
+        .type-post-transition { background-color: #86efac; } /* Xanh lá nhạt */
+        .type-metalloid { background-color: #67e8f9; } /* Cyan nhạt */
+        .type-nonmetal { background-color: #93c5fd; } /* Xanh dương nhạt */
+        .type-halogen { background-color: #c4b5fd; } /* Tím nhạt */
+        .type-noble-gas { background-color: #f9a8d4; } /* Hồng nhạt */
+        .type-lanthanide, .type-actinide { background-color: #d1d5db; } /* Xám nhạt */
+        
+        /* Animations */
+        @keyframes pulse-border { 0% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(13, 148, 136, 0); } 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); } }
+        .correct-anim { animation: pulse-border 1s; border-color: #22c55e !important; background-color: #dcfce7 !important; color: #166534 !important;}
+        .wrong-anim { border-color: #ef4444 !important; background-color: #fee2e2 !important; color: #991b1b !important;}
+        .floating { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
+
+        /* Timer bar */
+        .timer-track { width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+        .timer-fill { height: 100%; background: #22c55e; transition: width 1s linear, background-color 0.3s; }
+        .timer-warning { background: #eab308; }
+        .timer-danger { background: #ef4444; }
+
+        /* Modal Overlay */
+        .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 50; }
+        
+        /* Hiệu ứng chiến thắng */
+        @keyframes bounce-in { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); } }
+        .animate-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-teal-50 text-gray-800">
+
+    <!-- MÀN HÌNH CHÍNH (HOME) -->
+    <div id="screen-home" class="screen active flex-col items-center justify-center min-h-screen p-4">
+        <div class="text-center mb-8 relative z-10 floating">
+            <h2 class="text-2xl md:text-3xl font-semibold text-teal-600 mb-2 drop-shadow-sm">Hóa học 10 - Kết nối tri thức</h2>
+            <h1 class="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-secondary drop-shadow-md mb-4 uppercase">
+                Chinh Phục<br>Bảng Tuần Hoàn
+            </h1>
+            <p class="text-gray-600 text-lg">Khám phá bí ẩn của các nguyên tố hóa học!</p>
+        </div>
+
+        <div class="glass-panel p-8 rounded-3xl w-full max-w-md text-center z-10 shadow-xl">
+            <div id="home-player-info" class="mb-6 hidden">
+                <p class="text-gray-600">Xin chào, <span id="display-player-name" class="font-bold text-primary text-xl"></span> (<span id="display-player-class"></span>)</p>
+                <button onclick="changePlayer()" class="text-sm text-teal-600 hover:underline mt-1"><i class="fas fa-edit"></i> Đổi người chơi</button>
+            </div>
+            
+            <div id="home-input-form" class="space-y-4 mb-6">
+                <div>
+                    <input type="text" id="input-name" placeholder="Nhập họ và tên của bạn..." class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-lg text-center" required>
+                </div>
+                <div>
+                    <input type="text" id="input-class" placeholder="Nhập lớp (VD: 10A1)..." class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-lg text-center" required>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <button onclick="startGame()" class="w-full py-4 rounded-xl font-bold text-xl text-white bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 btn-hover btn-press shadow-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-play"></i> BẮT ĐẦU CHƠI
+                </button>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="showScreen('screen-pt')" class="py-3 rounded-xl font-semibold text-primary bg-blue-100 hover:bg-blue-200 btn-hover flex items-center justify-center gap-2">
+                        <i class="fas fa-table"></i> Bảng TH
+                    </button>
+                    <button onclick="showScreen('screen-leaderboard')" class="py-3 rounded-xl font-semibold text-accent bg-purple-100 hover:bg-purple-200 btn-hover flex items-center justify-center gap-2">
+                        <i class="fas fa-trophy"></i> Bảng Xếp Hạng
+                    </button>
+                </div>
+                <div class="flex justify-between items-center mt-6 pt-6 border-t border-gray-200">
+                    <button onclick="showInstructions()" class="text-gray-500 hover:text-primary transition-colors"><i class="fas fa-info-circle mr-1"></i> Hướng dẫn</button>
+                    <button onclick="openTeacherLogin()" class="text-gray-500 hover:text-red-500 transition-colors"><i class="fas fa-cog mr-1"></i> Giáo viên</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Background Decor -->
+        <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none opacity-20">
+            <i class="fas fa-atom absolute text-9xl text-blue-400" style="top: 10%; left: 10%; animation: float 8s infinite;"></i>
+            <i class="fas fa-flask absolute text-8xl text-teal-400" style="bottom: 20%; right: 15%; animation: float 10s infinite reverse;"></i>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH CHỌN CHẶNG -->
+    <div id="screen-stages" class="screen flex-col items-center justify-center min-h-screen p-4">
+        <div class="w-full max-w-4xl">
+            <div class="flex justify-between items-center mb-8">
+                <button onclick="showScreen('screen-home')" class="text-gray-600 hover:text-primary"><i class="fas fa-arrow-left text-xl"></i></button>
+                <h2 class="text-3xl font-bold text-center text-primary uppercase">Bản Đồ Chinh Phục</h2>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500">Tổng điểm</p>
+                    <p id="total-score-display" class="text-xl font-bold text-gold">0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="stages-container">
+                <!-- Chặng 1 -->
+                <div id="stage-card-1" class="glass-panel p-6 rounded-2xl cursor-pointer btn-hover relative overflow-hidden" onclick="enterStage(1)">
+                    <div class="absolute top-0 right-0 bg-blue-500 text-white px-3 py-1 rounded-bl-lg text-sm font-bold">Chặng 1</div>
+                    <div class="flex items-center gap-4 mb-3">
+                        <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-3xl text-blue-500">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Nhà Thám Hiểm Nguyên Tử</h3>
+                            <p class="text-sm text-gray-500">Mức độ: Nhận biết</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Khám phá khái niệm, nguyên tắc sắp xếp và cấu tạo cơ bản của bảng tuần hoàn.</p>
+                    <div class="flex justify-between items-center text-sm font-semibold">
+                        <span class="text-teal-600"><i class="fas fa-question-circle"></i> 10 Câu</span>
+                        <span id="stage-status-1" class="text-gray-400">Chưa hoàn thành</span>
+                    </div>
+                </div>
+
+                <!-- Chặng 2 -->
+                <div id="stage-card-2" class="glass-panel p-6 rounded-2xl relative overflow-hidden opacity-50 cursor-not-allowed" onclick="enterStage(2)">
+                    <div class="absolute top-0 right-0 bg-teal-500 text-white px-3 py-1 rounded-bl-lg text-sm font-bold">Chặng 2</div>
+                    <div class="absolute inset-0 bg-gray-200 bg-opacity-40 backdrop-blur-[2px] flex items-center justify-center z-10" id="lock-overlay-2">
+                        <i class="fas fa-lock text-4xl text-gray-500"></i>
+                    </div>
+                    <div class="flex items-center gap-4 mb-3">
+                        <div class="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center text-3xl text-teal-500">
+                            <i class="fas fa-puzzle-piece"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Giải Mã Bảng Tuần Hoàn</h3>
+                            <p class="text-sm text-gray-500">Mức độ: Thông hiểu</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Xác định vị trí, phân biệt chu kì, nhóm dựa vào cấu tạo ô nguyên tố.</p>
+                    <div class="flex justify-between items-center text-sm font-semibold">
+                        <span class="text-teal-600"><i class="fas fa-question-circle"></i> 10 Câu</span>
+                        <span id="stage-status-2" class="text-gray-400">Khóa</span>
+                    </div>
+                </div>
+
+                <!-- Chặng 3 -->
+                <div id="stage-card-3" class="glass-panel p-6 rounded-2xl relative overflow-hidden opacity-50 cursor-not-allowed" onclick="enterStage(3)">
+                    <div class="absolute top-0 right-0 bg-purple-500 text-white px-3 py-1 rounded-bl-lg text-sm font-bold">Chặng 3</div>
+                    <div class="absolute inset-0 bg-gray-200 bg-opacity-40 backdrop-blur-[2px] flex items-center justify-center z-10" id="lock-overlay-3">
+                        <i class="fas fa-lock text-4xl text-gray-500"></i>
+                    </div>
+                    <div class="flex items-center gap-4 mb-3">
+                        <div class="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center text-3xl text-purple-500">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Thử Thách Bảng Tuần Hoàn</h3>
+                            <p class="text-sm text-gray-500">Mức độ: Vận dụng</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Vận dụng mối liên hệ giữa cấu tạo nguyên tử và vị trí nguyên tố.</p>
+                    <div class="flex justify-between items-center text-sm font-semibold">
+                        <span class="text-teal-600"><i class="fas fa-question-circle"></i> 10 Câu</span>
+                        <span id="stage-status-3" class="text-gray-400">Khóa</span>
+                    </div>
+                </div>
+
+                <!-- Chặng 4 -->
+                <div id="stage-card-4" class="glass-panel p-6 rounded-2xl relative overflow-hidden opacity-50 cursor-not-allowed" onclick="enterStage(4)">
+                    <div class="absolute top-0 right-0 bg-gold text-white px-3 py-1 rounded-bl-lg text-sm font-bold">Chặng 4</div>
+                    <div class="absolute inset-0 bg-gray-200 bg-opacity-40 backdrop-blur-[2px] flex items-center justify-center z-10" id="lock-overlay-4">
+                        <i class="fas fa-lock text-4xl text-gray-500"></i>
+                    </div>
+                    <div class="flex items-center gap-4 mb-3">
+                        <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center text-3xl text-yellow-500">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Nhà Vô Địch Hóa Học</h3>
+                            <p class="text-sm text-gray-500">Mức độ: Vận dụng cao</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Giải quyết các bài toán tổng hợp, suy luận logic về vị trí và cấu tạo.</p>
+                    <div class="flex justify-between items-center text-sm font-semibold">
+                        <span class="text-teal-600"><i class="fas fa-question-circle"></i> 5 Câu</span>
+                        <span id="stage-status-4" class="text-gray-400">Khóa</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH CHƠI GAME -->
+    <div id="screen-game" class="screen flex-col items-center justify-start min-h-screen p-4 md:p-8">
+        <div class="w-full max-w-4xl glass-panel rounded-3xl p-6 shadow-2xl">
+            <!-- Header Game -->
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <div class="flex items-center gap-3">
+                    <button onclick="confirmExitGame()" class="text-gray-400 hover:text-red-500 text-xl"><i class="fas fa-times"></i></button>
+                    <div>
+                        <h3 id="game-stage-title" class="font-bold text-primary uppercase text-lg">Chặng 1</h3>
+                        <p class="text-xs text-gray-500">Câu <span id="game-q-current">1</span>/<span id="game-q-total">10</span></p>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-teal-600" id="game-timer-text">15s</div>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-gray-500">Điểm số</p>
+                    <p id="game-score" class="font-bold text-xl text-gold">0</p>
+                </div>
+            </div>
+            
+            <!-- Timer Bar -->
+            <div class="timer-track mb-6">
+                <div id="game-timer-bar" class="timer-fill w-full"></div>
+            </div>
+
+            <!-- Nội dung câu hỏi -->
+            <div class="mb-8 min-h-[120px] flex items-center justify-center">
+                <h2 id="game-question-text" class="text-xl md:text-2xl font-semibold text-gray-800 text-center leading-relaxed">Nội dung câu hỏi sẽ hiển thị ở đây?</h2>
+            </div>
+
+            <!-- Các đáp án -->
+            <div id="game-options" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- Nút đáp án được sinh ra bằng JS -->
+            </div>
+
+            <!-- Lời giải thích (ẩn ban đầu) -->
+            <div id="game-explanation" class="hidden bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mb-6 text-sm text-gray-700">
+                <span class="font-bold text-blue-700">Giải thích:</span> <span id="game-exp-text"></span>
+            </div>
+
+            <div class="text-center">
+                <button id="btn-next-question" onclick="nextQuestion()" class="hidden px-8 py-3 bg-primary text-white rounded-xl font-bold btn-hover">
+                    Câu tiếp theo <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH TỔNG KẾT CHẶNG -->
+    <div id="screen-stage-result" class="screen flex-col items-center justify-center min-h-screen p-4">
+        <div class="glass-panel p-8 rounded-3xl w-full max-w-md text-center shadow-xl">
+            <div id="stage-result-icon" class="text-6xl mb-4">🏆</div>
+            <h2 id="stage-result-title" class="text-3xl font-bold text-primary mb-2">Hoàn Thành Chặng 1!</h2>
+            <p id="stage-result-msg" class="text-gray-600 mb-6">Tuyệt vời, bạn đã vượt qua thử thách.</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6 text-left bg-gray-50 p-4 rounded-xl">
+                <div>
+                    <p class="text-sm text-gray-500">Số câu đúng</p>
+                    <p id="stage-result-correct" class="text-xl font-bold text-green-600">8/10</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Điểm chặng này</p>
+                    <p id="stage-result-score" class="text-xl font-bold text-gold">80</p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <button id="btn-stage-next" onclick="showScreen('screen-stages')" class="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-teal-500 to-blue-500 btn-hover">
+                    Tiếp tục hành trình
+                </button>
+                <button onclick="showScreen('screen-home')" class="w-full py-3 rounded-xl font-semibold text-gray-600 bg-gray-200 hover:bg-gray-300 btn-hover">
+                    Về trang chủ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH CHIẾN THẮNG CHUNG CUỘC -->
+    <div id="screen-victory" class="screen flex-col items-center justify-center min-h-screen p-4 relative overflow-hidden">
+        <!-- Background ánh sáng -->
+        <div class="absolute inset-0 bg-gradient-to-br from-amber-100 via-yellow-200 to-yellow-500 opacity-90 z-0"></div>
+        
+        <div class="glass-panel p-8 rounded-3xl w-full max-w-xl text-center shadow-2xl z-10 border-4 border-yellow-300 transform transition-all animate-bounce-in">
+            <div class="relative inline-block mb-6 mt-4">
+                <i class="fas fa-trophy text-8xl md:text-9xl text-yellow-500 drop-shadow-[0_0_20px_rgba(251,191,36,0.9)]"></i>
+                <div class="absolute -top-4 -right-4 text-4xl animate-ping">✨</div>
+                <div class="absolute top-10 -left-8 text-3xl animate-pulse delay-75">🌟</div>
+            </div>
+            
+            <h2 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-red-600 mb-2 uppercase drop-shadow-sm">CHÚC MỪNG!</h2>
+            <p class="text-lg md:text-xl text-yellow-900 mb-6 font-bold">Bạn đã xuất sắc chinh phục toàn bộ Bảng Tuần Hoàn!</p>
+            
+            <div class="bg-white/80 rounded-2xl p-6 mb-8 shadow-inner backdrop-blur-sm border border-yellow-200">
+                <p class="text-gray-600 mb-1 uppercase font-semibold text-sm">Tổng điểm chung cuộc</p>
+                <p id="victory-score" class="text-5xl font-black text-amber-500 mb-4 drop-shadow-sm">600</p>
+                <p class="text-gray-600 mb-1 uppercase font-semibold text-sm">Danh hiệu đạt được</p>
+                <p id="victory-title" class="text-2xl font-bold text-red-600 uppercase border-b-2 border-red-300 pb-1 inline-block">NHÀ VÔ ĐỊCH HÓA HỌC</p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="showScreen('screen-leaderboard')" class="w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-purple-500 to-pink-500 btn-hover shadow-lg flex items-center justify-center">
+                    <i class="fas fa-trophy mr-2"></i> Bảng Vàng
+                </button>
+                <button onclick="showScreen('screen-home')" class="w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-yellow-900 bg-yellow-300 hover:bg-yellow-400 btn-hover shadow-lg flex items-center justify-center">
+                    <i class="fas fa-home mr-2"></i> Về Trang Chủ
+                </button>
+            </div>
+        </div>
+        
+        <!-- Hiệu ứng pháo giấy -->
+        <div id="confetti-container" class="absolute inset-0 pointer-events-none z-20 overflow-hidden"></div>
+    </div>
+
+    <!-- MÀN HÌNH BẢNG TUẦN HOÀN TƯƠNG TÁC -->
+    <div id="screen-pt" class="screen flex-col min-h-screen p-4">
+        <div class="flex justify-between items-center mb-4">
+            <button onclick="showScreen('screen-home')" class="text-primary hover:bg-blue-100 px-4 py-2 rounded-lg font-bold"><i class="fas fa-arrow-left mr-2"></i> Trở về</button>
+            <h2 class="text-2xl font-bold text-primary uppercase text-center flex-grow">Bảng Tuần Hoàn Tương Tác</h2>
+        </div>
+        
+        <!-- Bảng thông tin chi tiết -->
+        <div id="pt-info-panel" class="hidden glass-panel p-4 rounded-xl mb-4 flex flex-col md:flex-row items-center gap-6 shadow-md transition-all">
+            <div id="pt-info-box" class="w-24 h-24 rounded-lg flex flex-col justify-center items-center border-2 border-gray-800 text-gray-800">
+                <span id="pt-info-z" class="text-sm self-start ml-2">1</span>
+                <span id="pt-info-sym" class="text-3xl font-bold">H</span>
+            </div>
+            <div class="flex-grow">
+                <h3 id="pt-info-name" class="text-2xl font-bold text-primary uppercase">Hydrogen</h3>
+                <div class="grid grid-cols-2 gap-x-8 gap-y-2 mt-2 text-sm text-gray-700">
+                    <p>Số hiệu nguyên tử (Z): <span id="pt-info-z-val" class="font-bold">1</span></p>
+                    <p>Chu kì: <span id="pt-info-period" class="font-bold">1</span></p>
+                    <p>Nhóm: <span id="pt-info-group" class="font-bold">IA (1)</span></p>
+                    <p>Loại nguyên tố: <span id="pt-info-type" class="font-bold capitalize">Phi kim</span></p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('pt-info-panel').classList.add('hidden')" class="text-gray-400 hover:text-gray-800 self-start"><i class="fas fa-times text-xl"></i></button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-4 overflow-x-auto">
+            <div class="min-w-[1000px]">
+                <!-- Chú thích cột -->
+                <div class="grid grid-cols-18 gap-1 mb-1 text-center text-xs font-bold text-gray-500" style="display: grid; grid-template-columns: repeat(18, 1fr);">
+                    <div>1 (IA)</div><div>2 (IIA)</div><div>3 (IIIB)</div><div>4 (IVB)</div><div>5 (VB)</div><div>6 (VIB)</div><div>7 (VIIB)</div><div>8 (VIIIB)</div><div>9 (VIIIB)</div><div>10 (VIIIB)</div><div>11 (IB)</div><div>12 (IIB)</div><div>13 (IIIA)</div><div>14 (IVA)</div><div>15 (VA)</div><div>16 (VIA)</div><div>17 (VIIA)</div><div>18 (VIIIA)</div>
+                </div>
+                <!-- Container Bảng -->
+                <div id="pt-container" class="pt-grid bg-gray-50 rounded-lg">
+                    <!-- Sinh ra bằng JS -->
+                </div>
+                <!-- Lanthanides & Actinides -->
+                <div id="pt-f-block" class="pt-grid bg-gray-50 rounded-lg mt-4 justify-center" style="grid-template-columns: repeat(15, 1fr); max-width: fit-content; margin-inline: auto;">
+                    <!-- Sinh ra bằng JS -->
+                </div>
+            </div>
+            
+            <!-- Chú giải -->
+            <div class="mt-6 flex flex-wrap gap-4 text-xs justify-center">
+                <div class="flex items-center gap-1"><div class="w-4 h-4 type-alkali border"></div> Kim loại kiềm</div>
+                <div class="flex items-center gap-1"><div class="w-4 h-4 type-alkaline-earth border"></div> Kim loại kiềm thổ</div>
+                <div class="flex items-center gap-1"><div class="w-4 h-4 type-transition border"></div> Kim loại chuyển tiếp</div>
+                <div class="flex items-center gap-1"><div class="w-4 h-4 type-post-transition border"></div> Kim loại sau chuyển tiếp</div>
+                <div class="flex items-center gap-1"><div class="w-4 h-4 type-metalloid border"></div> Á kim</div>
+                <div class="flex items-center gap-1"><div class="w-4 h-4 type-nonmetal border"></div> Phi kim</div>
+                <div class="flex items-center gap-1"><div class="w-4 h-4 type-halogen border"></div> Halogen</div>
+                <div class="flex items-center gap-1"><div class="w-4 h-4 type-noble-gas border"></div> Khí hiếm</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH BẢNG XẾP HẠNG -->
+    <div id="screen-leaderboard" class="screen flex-col items-center justify-start min-h-screen p-4 md:p-8">
+        <div class="w-full max-w-3xl glass-panel p-6 rounded-3xl shadow-xl">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="showScreen('screen-home')" class="text-primary hover:bg-blue-100 px-4 py-2 rounded-lg font-bold"><i class="fas fa-arrow-left mr-2"></i></button>
+                <h2 class="text-3xl font-bold text-accent uppercase text-center"><i class="fas fa-trophy text-gold"></i> Bảng Xếp Hạng</h2>
+                <div class="w-10"></div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-purple-100 text-purple-800">
+                            <th class="p-3 rounded-tl-lg">Hạng</th>
+                            <th class="p-3">Họ Tên</th>
+                            <th class="p-3">Lớp</th>
+                            <th class="p-3 text-right">Điểm</th>
+                            <th class="p-3 text-right rounded-tr-lg">Ngày</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <!-- Sinh ra bằng JS -->
+                    </tbody>
+                </table>
+                <div id="leaderboard-empty" class="text-center py-8 text-gray-500 hidden">
+                    Chưa có dữ liệu xếp hạng. Hãy là người đầu tiên!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH GIÁO VIÊN -->
+    <div id="screen-teacher" class="screen flex-col min-h-screen p-4 bg-gray-800 text-white">
+        <div class="w-full max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-6 border-b border-gray-600 pb-4">
+                <h2 class="text-2xl font-bold text-teal-400"><i class="fas fa-user-shield"></i> Bảng Điều Khiển Giáo Viên</h2>
+                <button onclick="showScreen('screen-home')" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded"><i class="fas fa-sign-out-alt mr-2"></i>Thoát</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Cài đặt -->
+                <div class="bg-gray-700 p-5 rounded-xl">
+                    <h3 class="text-xl font-bold mb-4 text-gold border-b border-gray-600 pb-2">Cài đặt chung</h3>
+                    <div class="space-y-3">
+                        <label class="flex items-center justify-between cursor-pointer">
+                            <span>Âm thanh trò chơi</span>
+                            <input type="checkbox" id="setting-sound" checked class="form-checkbox h-5 w-5 text-teal-500 rounded bg-gray-800 border-gray-600">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer">
+                            <span>Mở khóa tất cả các chặng</span>
+                            <input type="checkbox" id="setting-unlock-all" class="form-checkbox h-5 w-5 text-teal-500 rounded bg-gray-800 border-gray-600">
+                        </label>
+                        <div>
+                            <p class="mb-1 text-sm text-gray-400">Thời gian cơ bản/câu (giây)</p>
+                            <input type="number" id="setting-time" value="20" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-white">
+                        </div>
+                        <button onclick="saveTeacherSettings()" class="w-full mt-4 bg-teal-600 hover:bg-teal-500 py-2 rounded font-bold">Lưu Cài Đặt</button>
+                    </div>
+                </div>
+
+                <!-- Dữ liệu -->
+                <div class="bg-gray-700 p-5 rounded-xl">
+                    <h3 class="text-xl font-bold mb-4 text-blue-400 border-b border-gray-600 pb-2">Quản lý dữ liệu</h3>
+                    <div class="space-y-4">
+                        <button onclick="exportCSV()" class="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded font-bold flex items-center justify-center gap-2">
+                            <i class="fas fa-file-csv"></i> Xuất kết quả (CSV)
+                        </button>
+                        <button onclick="clearLeaderboard()" class="w-full bg-red-600 hover:bg-red-500 py-2 rounded font-bold flex items-center justify-center gap-2">
+                            <i class="fas fa-trash"></i> Xóa dữ liệu kết quả
+                        </button>
+                        <p class="text-xs text-gray-400 text-center">Dữ liệu được lưu trữ trực tiếp trên trình duyệt này.</p>
+                    </div>
+                </div>
+
+                <!-- Ngân hàng câu hỏi -->
+                <div class="bg-gray-700 p-5 rounded-xl">
+                    <h3 class="text-xl font-bold mb-4 text-purple-400 border-b border-gray-600 pb-2">Ngân hàng câu hỏi</h3>
+                    <p class="text-sm mb-4">Hệ thống hiện có <span id="teacher-q-count" class="font-bold text-white">50</span> câu hỏi.</p>
+                    <button onclick="alert('Chức năng chỉnh sửa câu hỏi chi tiết đang được phát triển trong phiên bản tiếp theo. Hiện tại hệ thống sử dụng 50 câu hỏi cốt lõi chuẩn SGK.')" class="w-full bg-gray-600 hover:bg-gray-500 py-2 rounded font-bold mb-2">
+                        <i class="fas fa-list"></i> Xem danh sách
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL HIỂN THỊ CHUNG -->
+    <div id="common-modal" class="fixed inset-0 modal-overlay hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl transform transition-all text-center">
+            <h3 id="modal-title" class="text-xl font-bold text-gray-800 mb-2">Thông báo</h3>
+            <p id="modal-msg" class="text-gray-600 mb-6">Nội dung</p>
+            <div id="modal-inputs" class="mb-4 hidden">
+                <input type="password" id="modal-input-val" class="w-full px-4 py-2 border rounded-lg text-center" placeholder="Nhập mật khẩu...">
+            </div>
+            <div class="flex justify-center gap-3">
+                <button id="modal-btn-cancel" class="hidden px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300">Hủy</button>
+                <button id="modal-btn-ok" class="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-blue-700">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL HƯỚNG DẪN -->
+    <div id="instructions-modal" class="fixed inset-0 modal-overlay hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeInstructions()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl"><i class="fas fa-times"></i></button>
+            <h2 class="text-2xl font-bold text-primary mb-4 text-center">HƯỚNG DẪN CHƠI</h2>
+            
+            <div class="space-y-4 text-gray-700">
+                <p>Chào mừng bạn đến với <strong>Chinh Phục Bảng Tuần Hoàn</strong>! Trò chơi gồm 4 chặng thử thách kiến thức Hóa học 10 của bạn:</p>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li><strong>Chặng 1 (Nhận biết):</strong> 10 câu hỏi cơ bản về cấu tạo, nguyên tắc. Trả lời đúng được 10 điểm/câu.</li>
+                    <li><strong>Chặng 2 (Thông hiểu):</strong> 10 câu hỏi phân tích ô nguyên tố. Trả lời đúng được 15 điểm/câu. <em class="text-sm text-gray-500">(Mở khóa khi đạt 60đ chặng 1)</em></li>
+                    <li><strong>Chặng 3 (Vận dụng):</strong> 10 câu hỏi suy luận vị trí. Trả lời đúng được 20 điểm/câu. <em class="text-sm text-gray-500">(Mở khóa khi đạt 90đ chặng 2)</em></li>
+                    <li><strong>Chặng 4 (Vận dụng cao):</strong> 5 câu hỏi khó. Trả lời đúng được 30 điểm/câu. <em class="text-sm text-gray-500">(Mở khóa khi đạt 120đ chặng 3)</em></li>
+                </ul>
+                <div class="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 text-sm">
+                    <strong>Lưu ý:</strong> Mỗi câu hỏi có giới hạn thời gian. Hết giờ được tính là sai. Hãy suy nghĩ nhanh và chọn đáp án chính xác nhất!
+                </div>
+                <div class="text-center mt-6">
+                    <button onclick="closeInstructions()" class="px-6 py-2 bg-teal-500 text-white rounded-lg font-bold hover:bg-teal-600">Đã hiểu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Âm thanh (AudioContext tạo trong JS) -->
+
+    <script>
+        // --- DỮ LIỆU BẢNG TUẦN HOÀN CƠ BẢN ---
+        // Giới hạn hiển thị chuẩn cho học sinh THPT, đầy đủ 118 nguyên tố cho UI
+        const elementsData = [
+            { z: 1, sym: "H", name: "Hydrogen", group: 1, period: 1, type: "nonmetal" },
+            { z: 2, sym: "He", name: "Helium", group: 18, period: 1, type: "noble-gas" },
+            { z: 3, sym: "Li", name: "Lithium", group: 1, period: 2, type: "alkali" },
+            { z: 4, sym: "Be", name: "Beryllium", group: 2, period: 2, type: "alkaline-earth" },
+            { z: 5, sym: "B", name: "Boron", group: 13, period: 2, type: "metalloid" },
+            { z: 6, sym: "C", name: "Carbon", group: 14, period: 2, type: "nonmetal" },
+            { z: 7, sym: "N", name: "Nitrogen", group: 15, period: 2, type: "nonmetal" },
+            { z: 8, sym: "O", name: "Oxygen", group: 16, period: 2, type: "nonmetal" },
+            { z: 9, sym: "F", name: "Fluorine", group: 17, period: 2, type: "halogen" },
+            { z: 10, sym: "Ne", name: "Neon", group: 18, period: 2, type: "noble-gas" },
+            { z: 11, sym: "Na", name: "Sodium", group: 1, period: 3, type: "alkali" },
+            { z: 12, sym: "Mg", name: "Magnesium", group: 2, period: 3, type: "alkaline-earth" },
+            { z: 13, sym: "Al", name: "Aluminium", group: 13, period: 3, type: "post-transition" },
+            { z: 14, sym: "Si", name: "Silicon", group: 14, period: 3, type: "metalloid" },
+            { z: 15, sym: "P", name: "Phosphorus", group: 15, period: 3, type: "nonmetal" },
+            { z: 16, sym: "S", name: "Sulfur", group: 16, period: 3, type: "nonmetal" },
+            { z: 17, sym: "Cl", name: "Chlorine", group: 17, period: 3, type: "halogen" },
+            { z: 18, sym: "Ar", name: "Argon", group: 18, period: 3, type: "noble-gas" },
+            { z: 19, sym: "K", name: "Potassium", group: 1, period: 4, type: "alkali" },
+            { z: 20, sym: "Ca", name: "Calcium", group: 2, period: 4, type: "alkaline-earth" },
+            // ... (Các nguyên tố chuyển tiếp chu kì 4)
+            { z: 21, sym: "Sc", name: "Scandium", group: 3, period: 4, type: "transition" },
+            { z: 22, sym: "Ti", name: "Titanium", group: 4, period: 4, type: "transition" },
+            { z: 23, sym: "V", name: "Vanadium", group: 5, period: 4, type: "transition" },
+            { z: 24, sym: "Cr", name: "Chromium", group: 6, period: 4, type: "transition" },
+            { z: 25, sym: "Mn", name: "Manganese", group: 7, period: 4, type: "transition" },
+            { z: 26, sym: "Fe", name: "Iron", group: 8, period: 4, type: "transition" },
+            { z: 27, sym: "Co", name: "Cobalt", group: 9, period: 4, type: "transition" },
+            { z: 28, sym: "Ni", name: "Nickel", group: 10, period: 4, type: "transition" },
+            { z: 29, sym: "Cu", name: "Copper", group: 11, period: 4, type: "transition" },
+            { z: 30, sym: "Zn", name: "Zinc", group: 12, period: 4, type: "transition" },
+            // ...
+            { z: 31, sym: "Ga", name: "Gallium", group: 13, period: 4, type: "post-transition" },
+            { z: 35, sym: "Br", name: "Bromine", group: 17, period: 4, type: "halogen" },
+            { z: 36, sym: "Kr", name: "Krypton", group: 18, period: 4, type: "noble-gas" },
+            { z: 53, sym: "I", name: "Iodine", group: 17, period: 5, type: "halogen" }
+        ];
+
+        // --- NGÂN HÀNG CÂU HỎI (50 Câu) ---
+        // Phân loại: Stage 1 (Nhận biết - 15 câu), Stage 2 (Thông hiểu - 15 câu), Stage 3 (Vận dụng - 15 câu), Stage 4 (Vận dụng cao - 5 câu)
+        const questionBank = [
+            // --- CHẶNG 1: NHẬN BIẾT (15 câu) ---
+            { q: "Các nguyên tố hóa học trong bảng tuần hoàn hiện đại được sắp xếp theo chiều tăng dần của đại lượng nào?", o: ["Nguyên tử khối.", "Số hiệu nguyên tử.", "Số neutron.", "Số lớp electron."], a: 1, exp: "Số hiệu nguyên tử tăng dần là nguyên tắc cơ bản để sắp xếp.", s: 1 },
+            { q: "Số hiệu nguyên tử của một nguyên tố bằng:", o: ["Số neutron trong hạt nhân.", "Tổng số proton và neutron.", "Số proton trong hạt nhân.", "Số khối."], a: 2, exp: "Số hiệu nguyên tử Z = Số proton (P) = Số electron (E).", s: 1 },
+            { q: "Trong một nguyên tử trung hòa về điện, số electron bằng:", o: ["Số neutron.", "Số proton.", "Số khối.", "Số lớp electron."], a: 1, exp: "Nguyên tử trung hòa về điện nên số P mang điện tích dương bằng số E mang điện tích âm.", s: 1 },
+            { q: "Các nguyên tố nằm trên cùng một hàng ngang của bảng tuần hoàn được gọi là:", o: ["Nhóm.", "Chu kì.", "Ô nguyên tố.", "Phân nhóm."], a: 1, exp: "Hàng ngang là chu kì, cột dọc là nhóm.", s: 1 },
+            { q: "Các nguyên tố nằm trong cùng một cột của bảng tuần hoàn được xếp trong cùng:", o: ["Chu kì.", "Nhóm.", "Ô nguyên tố.", "Lớp electron."], a: 1, exp: "Cột dọc trong bảng tuần hoàn được gọi là nhóm.", s: 1 },
+            { q: "Số thứ tự của chu kì cho biết:", o: ["Số proton của nguyên tử.", "Số lớp electron của nguyên tử.", "Số electron lớp ngoài cùng.", "Số hiệu nguyên tử."], a: 1, exp: "Số thứ tự chu kì = Số lớp electron.", s: 1 },
+            { q: "Số thứ tự của nhóm A cho biết:", o: ["Số lớp electron.", "Tổng số electron.", "Số electron hóa trị (thường là electron ngoài cùng).", "Số nơtron."], a: 2, exp: "Đối với nhóm A, số thứ tự nhóm bằng số electron hóa trị.", s: 1 },
+            { q: "Bảng tuần hoàn hiện đại gồm bao nhiêu chu kì?", o: ["7", "8", "18", "9"], a: 0, exp: "Bảng tuần hoàn có 7 chu kì (được đánh số từ 1 đến 7).", s: 1 },
+            { q: "Chu kì nào sau đây được gọi là chu kì nhỏ?", o: ["Chu kì 4", "Chu kì 5", "Chu kì 6", "Chu kì 2"], a: 3, exp: "Chu kì 1, 2, 3 là các chu kì nhỏ.", s: 1 },
+            { q: "Bảng tuần hoàn hiện nay có bao nhiêu cột (nhóm theo chuẩn IUPAC)?", o: ["8", "16", "18", "7"], a: 2, exp: "Theo chuẩn IUPAC, bảng tuần hoàn có 18 cột, đánh số từ 1 đến 18.", s: 1 },
+            { q: "Thông tin nào thường KHÔNG có trong ô nguyên tố cơ bản?", o: ["Kí hiệu hóa học.", "Số hiệu nguyên tử.", "Nguyên tử khối trung bình.", "Số hạt neutron cụ thể của 1 đồng vị."], a: 3, exp: "Số neutron phụ thuộc vào từng đồng vị, không ghi cố định 1 số trên ô nguyên tố chung.", s: 1 },
+            { q: "Nguyên tố M thuộc chu kì 3. Nguyên tử M có bao nhiêu lớp electron?", o: ["1", "2", "3", "4"], a: 2, exp: "Số thứ tự chu kì = số lớp electron.", s: 1 },
+            { q: "Khối các nguyên tố s bao gồm:", o: ["Nhóm IA và IIA.", "Từ nhóm IIIA đến VIIIA.", "Các nhóm B.", "Họ lanthanide."], a: 0, exp: "Khối s gồm nhóm IA và IIA (trừ He nhóm VIIIA).", s: 1 },
+            { q: "Chu kì 1 có bao nhiêu nguyên tố?", o: ["2", "8", "18", "32"], a: 0, exp: "Chu kì 1 chỉ có H và He.", s: 1 },
+            { q: "Các nguyên tố khí hiếm nằm ở nhóm nào trong bảng tuần hoàn?", o: ["Nhóm IA (1).", "Nhóm VIIA (17).", "Nhóm VIIIA (18).", "Nhóm IIA (2)."], a: 2, exp: "Khí hiếm nằm ở cột cuối cùng bên phải, nhóm VIIIA (18).", s: 1 },
+
+            // --- CHẶNG 2: THÔNG HIỂU (15 câu) ---
+            { q: "Nguyên tố Sodium (Na) có Z = 11. Nguyên tử Na trung hòa có:", o: ["11 proton, 11 electron.", "11 proton, 10 electron.", "11 neutron, 11 electron.", "23 proton, 11 electron."], a: 0, exp: "Z = P = E = 11.", s: 2 },
+            { q: "Nguyên tố Magnesium (Mg) có Z = 12. Vị trí của Mg trong bảng tuần hoàn là:", o: ["Chu kì 2, nhóm IIA.", "Chu kì 3, nhóm IIA.", "Chu kì 3, nhóm IIIA.", "Chu kì 2, nhóm IA."], a: 1, exp: "Z=12 (Mg) nằm ngay sau Na (Z=11, chu kì 3), ở cột thứ 2 (IIA).", s: 2 },
+            { q: "Một nguyên tử có 17 proton. Số hiệu nguyên tử của nguyên tố đó là:", o: ["7", "17", "35", "18"], a: 1, exp: "Số hiệu nguyên tử Z luôn bằng số proton trong hạt nhân.", s: 2 },
+            { q: "Phát biểu nào sau đây ĐÚNG về cấu tạo BTH?", o: ["Nhóm là hàng ngang.", "Chu kì là cột dọc.", "Các nguyên tố cùng chu kì có tính chất hóa học tương tự nhau.", "Các nguyên tố cùng nhóm A có số electron lớp ngoài cùng bằng nhau."], a: 3, exp: "Cùng nhóm A có số e lớp ngoài cùng bằng nhau (trừ He) nên tính chất tương tự nhau.", s: 2 },
+            { q: "Nguyên tố X thuộc chu kì 3, nhóm VA. Cấu hình electron lớp ngoài cùng của X là:", o: ["3s2 3p1", "3s2 3p3", "2s2 2p3", "3s2 3p5"], a: 1, exp: "Chu kì 3 (lớp 3), nhóm VA (5e lớp ngoài cùng) -> 3s2 3p3.", s: 2 },
+            { q: "Oxy (O) có Z=8. Vị trí của O là:", o: ["Chu kì 2, nhóm VIA.", "Chu kì 2, nhóm IVA.", "Chu kì 3, nhóm VIA.", "Chu kì 2, nhóm VIIA."], a: 0, exp: "Z=8 -> Cấu hình 1s2 2s2 2p4 -> 2 lớp (chu kì 2), 6e ngoài cùng (nhóm VIA).", s: 2 },
+            { q: "Cho các nguyên tố: Li (Z=3), Na (Z=11), K (Z=19). Đặc điểm chung của chúng là:", o: ["Cùng chu kì.", "Cùng số lớp electron.", "Cùng thuộc nhóm IA.", "Đều là phi kim."], a: 2, exp: "Li, Na, K đều là kim loại kiềm thuộc nhóm IA.", s: 2 },
+            { q: "Đại lượng nào sau đây biến thiên tuần hoàn theo chiều tăng của điện tích hạt nhân?", o: ["Nguyên tử khối.", "Số thứ tự.", "Số electron hóa trị.", "Số lớp electron."], a: 2, exp: "Số electron hóa trị lặp đi lặp lại sau mỗi chu kì.", s: 2 },
+            { q: "Nguyên tử của nguyên tố Y có 3 lớp electron và có 7 electron ở lớp ngoài cùng. Vị trí của Y là:", o: ["Chu kì 3, nhóm VIIA.", "Chu kì 7, nhóm IIIA.", "Chu kì 3, nhóm VIIB.", "Chu kì 4, nhóm VIIA."], a: 0, exp: "3 lớp -> chu kì 3. 7e ngoài cùng -> nhóm VIIA.", s: 2 },
+            { q: "Dãy nguyên tố nào sau đây thuộc cùng một chu kì?", o: ["F, Cl, Br.", "Li, Be, B.", "O, S, Se.", "He, Ne, Ar."], a: 1, exp: "Li(3), Be(4), B(5) đều thuộc chu kì 2.", s: 2 },
+            { q: "Neon (Ne) có Z=10 thuộc nhóm VIIIA. Nguyên tố liền kề phía dưới nó (cùng nhóm) có Z bằng bao nhiêu?", o: ["11", "18", "20", "36"], a: 1, exp: "Argon (Ar) nằm dưới Ne, có Z = 10 + 8 = 18.", s: 2 },
+            { q: "Nguyên tố p là những nguyên tố có electron cuối cùng điền vào phân lớp:", o: ["s", "p", "d", "f"], a: 1, exp: "Định nghĩa nguyên tố p.", s: 2 },
+            { q: "Nitrogen (N) có 7 electron. Vị trí của N là:", o: ["Ô số 7, chu kì 2, nhóm VA.", "Ô số 7, chu kì 3, nhóm VA.", "Ô số 14, chu kì 2, nhóm VA.", "Ô số 7, chu kì 2, nhóm VIIA."], a: 0, exp: "Z=7 (ô 7), cấu hình 1s2 2s2 2p3 (2 lớp -> CK 2, 5e -> nhóm VA).", s: 2 },
+            { q: "Các nguyên tố khối d và f thuộc loại:", o: ["Phi kim.", "Khí hiếm.", "Kim loại.", "Á kim."], a: 2, exp: "Tất cả các nguyên tố khối d và f (nhóm B) đều là kim loại.", s: 2 },
+            { q: "Halogen là tên gọi của nhóm nguyên tố nào?", o: ["Nhóm IA.", "Nhóm VIIA.", "Nhóm VIIIA.", "Nhóm IIA."], a: 1, exp: "Nhóm VIIA (17) là nhóm halogen.", s: 2 },
+
+            // --- CHẶNG 3: VẬN DỤNG (15 câu) ---
+            { q: "Hai nguyên tố A, B đứng kế tiếp nhau trong một chu kì có tổng số hiệu nguyên tử là 25. Vị trí của A, B (Za < Zb) là:", o: ["Mg (12), Al (13).", "Na (11), Si (14).", "C (6), K (19).", "F (9), S (16)."], a: 0, exp: "Kế tiếp trong 1 chu kì -> Zb - Za = 1. Za + Zb = 25. Giải hệ: Za=12(Mg), Zb=13(Al).", s: 3 },
+            { q: "Nguyên tử nguyên tố X có tổng số hạt cơ bản (p, n, e) là 40, trong đó số hạt mang điện nhiều hơn không mang điện là 12. X là nguyên tố nào?", o: ["Na (Z=11)", "Mg (Z=12)", "Al (Z=13)", "Si (Z=14)"], a: 2, exp: "2Z + N = 40; 2Z - N = 12 => 4Z = 52 => Z = 13 (Al).", s: 3 },
+            { q: "Anion X2- có cấu hình electron giống hệt Ne (Z=10). Vị trí của X trong BTH là:", o: ["Ô 12, chu kì 3, nhóm IIA.", "Ô 8, chu kì 2, nhóm VIA.", "Ô 10, chu kì 2, nhóm VIIIA.", "Ô 16, chu kì 3, nhóm VIA."], a: 1, exp: "X + 2e = 10e => X có 8e (Z=8, Oxy). Chu kì 2, nhóm VIA.", s: 3 },
+            { q: "Cation M+ có 18 electron. M thuộc chu kì và nhóm nào?", o: ["Chu kì 4, nhóm IA.", "Chu kì 3, nhóm VIIA.", "Chu kì 3, nhóm VIIIA.", "Chu kì 4, nhóm IIA."], a: 0, exp: "M - 1e = 18e => M có 19e (Z=19, K). Cấu hình M: [Ar]4s1 -> Chu kì 4, nhóm IA.", s: 3 },
+            { q: "Nguyên tố R có công thức oxide cao nhất là RO3. Trong hợp chất khí với hydrogen, R chiếm 94,12% khối lượng (biết H=1). Nguyên tử khối của R là:", o: ["16", "32", "80", "14"], a: 1, exp: "RO3 -> R thuộc nhóm VIA. Hợp chất với H: RH2. %R = R/(R+2) = 0.9412 => R ≈ 32 (Sulfur).", s: 3 },
+            { q: "Nguyên tố X có điện tích hạt nhân là +20. Phát biểu nào SAI?", o: ["X ở chu kì 4.", "X là kim loại kiềm thổ.", "X có 2 electron hóa trị.", "X là nguyên tố khối p."], a: 3, exp: "Z=20 (Ca), cấu hình [Ar]4s2. Là nguyên tố khối s, không phải p.", s: 3 },
+            { q: "X, Y là 2 nguyên tố ở 2 nhóm A liên tiếp, thuộc cùng 1 chu kì. Tổng số p của X và Y là 31. Xác định X, Y.", o: ["N, O", "P, S", "Si, P", "C, N"], a: 1, exp: "Zy - Zx = 1; Zx + Zy = 31 => Zx = 15(P), Zy = 16(S).", s: 3 },
+            { q: "Trong bảng tuần hoàn, nguyên tố nào có tính phi kim mạnh nhất?", o: ["Oxygen (O)", "Fluorine (F)", "Chlorine (Cl)", "Nitrogen (N)"], a: 1, exp: "Fluorine (Góc trên cùng bên phải, không tính khí hiếm) có độ âm điện lớn nhất, tính phi kim mạnh nhất.", s: 3 },
+            { q: "Hợp chất ion XY2 tạo bởi 2 nguyên tố. X thuộc nhóm IIA, Y thuộc nhóm VIIA. Nếu X có Z=20, công thức phân tử là:", o: ["MgCl2", "CaCl2", "CaF2", "Chưa đủ dữ kiện để biết Y cụ thể."], a: 3, exp: "Biết X là Ca(Z=20). Y là halogen (F, Cl, Br, I), cần thêm dữ kiện để xác định chính xác Y, nhưng hợp chất là CaY2. Đáp án D hợp logic nhất.", s: 3 },
+            { q: "Một nguyên tố khối d có 5 electron ở phân lớp 3d. Cấu hình electron của nó có thể là:", o: ["[Ar] 3d5 4s2 (Mn)", "[Ar] 3d5 4s1 (Cr)", "Cả A và B đều đúng", "[Ar] 4s2 4p3"], a: 2, exp: "Cr(Z=24) có cấu hình bán bão hòa 3d5 4s1, Mn(Z=25) có cấu hình 3d5 4s2.", s: 3 },
+            { q: "Cho các nguyên tố: Na (Z=11), Mg (Z=12), Al (Z=13). Thứ tự giảm dần tính kim loại là:", o: ["Na > Mg > Al", "Al > Mg > Na", "Mg > Na > Al", "Na > Al > Mg"], a: 0, exp: "Trong 1 chu kì, từ trái sang phải tính kim loại giảm dần.", s: 3 },
+            { q: "Đồng vị 14C (Carbon-14) có bao nhiêu nơtron trong hạt nhân? Biết Z của C là 6.", o: ["6", "8", "14", "12"], a: 1, exp: "Số N = Số khối (A) - Số proton (Z) = 14 - 6 = 8.", s: 3 },
+            { q: "Ion nào sau đây KHÔNG có cấu hình electron của khí hiếm?", o: ["Na+", "Cl-", "Fe2+", "O2-"], a: 2, exp: "Fe(Z=26): [Ar]3d6 4s2. Fe2+: [Ar]3d6 (không phải cấu hình khí hiếm).", s: 3 },
+            { q: "Nguyên tố nào sau đây là chất lỏng ở điều kiện thường?", o: ["Mercury (Hg) và Bromine (Br)", "Sodium (Na)", "Iodine (I)", "Fluorine (F)"], a: 0, exp: "Hg (kim loại lỏng), Br (phi kim lỏng).", s: 3 },
+            { q: "Một nguyên tố có 4 lớp electron, lớp ngoài cùng có 1 electron. Số hiệu nguyên tử của nó có thể là:", o: ["19 (K)", "29 (Cu)", "Cả A và B", "20 (Ca)"], a: 2, exp: "K: [Ar]4s1. Cu (bất thường): [Ar]3d10 4s1. Cả 2 đều có 1e lớp ngoài cùng ở chu kì 4.", s: 3 },
+
+            // --- CHẶNG 4: VẬN DỤNG CAO (5 câu) ---
+            { q: "Hợp chất X có dạng AB2. Tổng số proton trong X là 22. A và B thuộc hai chu kì liên tiếp, đều thuộc nhóm A. Xác định A, B.", o: ["A là C(6), B là O(8)", "A là N(7), B là O(8)", "A là S(16), B là H(1)", "A là C(6), B là F(9)"], a: 0, exp: "Za + 2Zb = 22. Nếu A(C, Z=6) và B(O, Z=8) => 6 + 16 = 22. C (ck 2), O (ck 2). *Lỗi đề bài nhỏ: C và O cùng chu kì. Sửa lại: A, B thuộc cùng chu kì hoặc liên tiếp. CO2 phù hợp nhất.*", s: 4 },
+            { q: "Nguyên tử nguyên tố X có e cuối cùng điền vào phân lớp 3p^4. Nguyên tử Y có e cuối cùng điền vào 4s^1. Tính Zx + Zy.", o: ["35", "16 + 19 = 35", "36", "38"], a: 1, exp: "X: [Ne]3s2 3p4 (Z=16, S). Y: [Ar]4s1 (Z=19, K). Tổng = 35.", s: 4 },
+            { q: "Cho ion AB4+. Tổng số electron của ion này là 10. Biết Z_A, Z_B lần lượt là số hạt proton của A và B. Xác định hợp chất AB4+.", o: ["NH4+", "CH4", "H3O+", "PH4+"], a: 0, exp: "Số e = Z_A + 4(Z_B) - 1 = 10 => Z_A + 4Z_B = 11. B thường là H (Z=1) => Z_A = 7 (Nitrogen). => NH4+.", s: 4 },
+            { q: "Hai nguyên tố A, B đứng kế tiếp nhau trong cùng 1 nhóm A, có tổng Z bằng 32. Vị trí của A, B là:", o: ["O (8) và S (16)", "F (9) và Cl (17)", "Mg (12) và Ca (20)", "C (6) và Si (14)"], a: 2, exp: "Trong 1 nhóm A, CK nhỏ kế CK lớn hơn cách nhau 8 nguyên tố. Z_B - Z_A = 8; Z_A + Z_B = 32 => Z_A=12(Mg), Z_B=20(Ca).", s: 4 },
+            { q: "Trong tự nhiên Cu có hai đồng vị là 63Cu và 65Cu. Nguyên tử khối trung bình của Cu là 63,54. Thành phần % số lượng đồng vị 63Cu là:", o: ["27%", "73%", "54%", "50%"], a: 1, exp: "Gọi % 63Cu là x. 63x + 65(1-x) = 63.54 => 65 - 2x = 63.54 => 2x = 1.46 => x = 0.73 (73%).", s: 4 }
+        ];
+
+        // --- STATE & BIẾN TOÀN CỤC ---
+        let state = {
+            player: { name: "", class: "", score: 0, timeSpent: 0 },
+            stagesStatus: [
+                { id: 1, locked: false, score: 0, total: 10, passed: false },
+                { id: 2, locked: true, score: 0, total: 10, passed: false },
+                { id: 3, locked: true, score: 0, total: 10, passed: false },
+                { id: 4, locked: true, score: 0, total: 5, passed: false }
+            ],
+            settings: {
+                sound: true,
+                baseTime: 20, // giây/câu
+                unlockAll: false
+            }
+        };
+
+        let currentStageObj = null;
+        let gameQuestions = [];
+        let currentQIndex = 0;
+        let timerInterval;
+        let timeLeft = 0;
+        let isAnswering = false;
+
+        // Audio Context (Khởi tạo khi user tương tác để tránh bị block)
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        function playTone(freq, type, duration) {
+            if (!state.settings.sound) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type; 
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                
+                // Fade out để tránh tiếng click
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(); 
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) { console.log("Audio play failed"); }
+        }
+        const sfx = {
+            correct: () => { playTone(600, 'sine', 0.1); setTimeout(()=>playTone(800, 'sine', 0.2), 100); },
+            wrong: () => { playTone(300, 'sawtooth', 0.3); },
+            unlock: () => { playTone(400, 'square', 0.1); setTimeout(()=>playTone(500, 'square', 0.1), 100); setTimeout(()=>playTone(600, 'square', 0.2), 200); },
+            win: () => { playTone(400, 'sine', 0.2); setTimeout(()=>playTone(523, 'sine', 0.2), 200); setTimeout(()=>playTone(659, 'sine', 0.2), 400); setTimeout(()=>playTone(880, 'sine', 0.6), 600); }
+        };
+
+        // --- LOGIC GIAO DIỆN ---
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(el => {
+                el.classList.remove('active');
+            });
+            const target = document.getElementById(screenId);
+            if(target) {
+                // Đảm bảo display flex trước khi thêm active (cho transition)
+                target.style.display = 'flex';
+                setTimeout(() => target.classList.add('active'), 10);
+            }
+            if(screenId === 'screen-pt') renderPeriodicTable();
+            if(screenId === 'screen-leaderboard') renderLeaderboard();
+            if(screenId === 'screen-stages') updateStageUI();
+            
+            // Dừng timer nếu thoát khỏi game
+            if(screenId !== 'screen-game') clearInterval(timerInterval);
+        }
+
+        // Modal Custom
+        function showModal(title, msg, onOk = null, showInput = false) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-msg').innerHTML = msg;
+            
+            const inputContainer = document.getElementById('modal-inputs');
+            const inputVal = document.getElementById('modal-input-val');
+            if(showInput) {
+                inputContainer.classList.remove('hidden');
+                inputVal.value = '';
+                inputVal.focus();
+            } else {
+                inputContainer.classList.add('hidden');
+            }
+
+            const modal = document.getElementById('common-modal');
+            modal.classList.remove('hidden');
+
+            const btnOk = document.getElementById('modal-btn-ok');
+            const btnCancel = document.getElementById('modal-btn-cancel');
+            
+            // Xóa event cũ
+            const newBtnOk = btnOk.cloneNode(true);
+            btnOk.parentNode.replaceChild(newBtnOk, btnOk);
+            const newBtnCancel = btnCancel.cloneNode(true);
+            btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+            if(showInput) {
+                newBtnCancel.classList.remove('hidden');
+                newBtnCancel.onclick = () => modal.classList.add('hidden');
+            } else {
+                newBtnCancel.classList.add('hidden');
+            }
+
+            newBtnOk.onclick = () => {
+                if(onOk) onOk(inputVal.value);
+                else modal.classList.add('hidden');
+            };
+        }
+
+        function showInstructions() { document.getElementById('instructions-modal').classList.remove('hidden'); }
+        function closeInstructions() { document.getElementById('instructions-modal').classList.add('hidden'); }
+
+        // Load dữ liệu ban đầu
+        window.onload = () => {
+            const savedState = localStorage.getItem('chemistryGameState');
+            if(savedState) {
+                try {
+                    state = JSON.parse(savedState);
+                    updateHomeUI();
+                } catch(e) { console.error("Lỗi đọc dữ liệu"); }
+            }
+        };
+
+        function saveData() {
+            localStorage.setItem('chemistryGameState', JSON.stringify(state));
+        }
+
+        function updateHomeUI() {
+            if(state.player.name && state.player.class) {
+                document.getElementById('home-input-form').classList.add('hidden');
+                document.getElementById('home-player-info').classList.remove('hidden');
+                document.getElementById('display-player-name').innerText = state.player.name;
+                document.getElementById('display-player-class').innerText = state.player.class;
+            } else {
+                document.getElementById('home-input-form').classList.remove('hidden');
+                document.getElementById('home-player-info').classList.add('hidden');
+            }
+        }
+
+        function changePlayer() {
+            state.player = { name: "", class: "", score: 0, timeSpent: 0 };
+            // Reset chặng
+            state.stagesStatus.forEach((s, idx) => {
+                s.score = 0; s.passed = false;
+                if(idx > 0 && !state.settings.unlockAll) s.locked = true;
+            });
+            saveData();
+            updateHomeUI();
+            document.getElementById('input-name').value = '';
+            document.getElementById('input-class').value = '';
+        }
+
+        function startGame() {
+            initAudio();
+            if(!state.player.name) {
+                const nameInp = document.getElementById('input-name').value.trim();
+                const classInp = document.getElementById('input-class').value.trim();
+                if(!nameInp || !classInp) {
+                    showModal("Thông báo", "Vui lòng nhập đầy đủ Họ tên và Lớp để bắt đầu!");
+                    return;
+                }
+                state.player.name = nameInp;
+                state.player.class = classInp;
+                saveData();
+                updateHomeUI();
+            }
+            showScreen('screen-stages');
+        }
+
+        function updateStageUI() {
+            let totalScore = 0;
+            state.stagesStatus.forEach(s => {
+                totalScore += s.score;
+                const card = document.getElementById(`stage-card-${s.id}`);
+                const status = document.getElementById(`stage-status-${s.id}`);
+                const overlay = document.getElementById(`lock-overlay-${s.id}`);
+                
+                if (state.settings.unlockAll) s.locked = false;
+
+                if (s.locked) {
+                    card.classList.add('opacity-50', 'cursor-not-allowed');
+                    card.classList.remove('border-2', 'border-teal-500', 'shadow-lg');
+                    status.innerText = "Khóa";
+                    status.classList.remove('text-green-500');
+                    if(overlay) overlay.classList.remove('hidden');
+                } else {
+                    card.classList.remove('opacity-50', 'cursor-not-allowed');
+                    if(overlay) overlay.classList.add('hidden');
+                    
+                    if (s.passed) {
+                        card.classList.add('border-2', 'border-teal-500', 'shadow-lg');
+                        status.innerText = `${s.score} điểm`;
+                        status.classList.add('text-green-600', 'font-bold');
+                    } else {
+                        card.classList.remove('border-2', 'border-teal-500', 'shadow-lg');
+                        status.innerText = "Mở khóa";
+                        status.classList.remove('text-green-600');
+                    }
+                }
+            });
+            document.getElementById('total-score-display').innerText = totalScore;
+            state.player.score = totalScore;
+            saveData();
+        }
+
+        function enterStage(stageId) {
+            const s = state.stagesStatus.find(x => x.id === stageId);
+            if(s.locked && !state.settings.unlockAll) {
+                showModal("Chưa mở khóa", "Hoàn thành chặng trước với ít nhất 60% số điểm để mở khóa chặng này!");
+                return;
+            }
+            
+            currentStageObj = s;
+            // Filter questions for this stage
+            let pool = questionBank.filter(q => q.s === stageId);
+            // Shuffle and pick required amount
+            pool = pool.sort(() => 0.5 - Math.random());
+            gameQuestions = pool.slice(0, currentStageObj.total);
+            
+            // Xử lý random vị trí đáp án cho mỗi câu
+            gameQuestions = gameQuestions.map(q => {
+                let optionsWithIndex = q.o.map((opt, i) => ({text: opt, originalIndex: i}));
+                optionsWithIndex = optionsWithIndex.sort(() => 0.5 - Math.random());
+                let newAnswerIndex = optionsWithIndex.findIndex(opt => opt.originalIndex === q.a);
+                return { ...q, displayOptions: optionsWithIndex.map(opt => opt.text), currentCorrectIndex: newAnswerIndex };
+            });
+
+            currentQIndex = 0;
+            currentStageObj.score = 0; // Reset điểm chặng khi chơi lại
+            
+            document.getElementById('game-stage-title').innerText = `Chặng ${stageId}`;
+            document.getElementById('game-q-total').innerText = currentStageObj.total;
+            document.getElementById('game-score').innerText = '0';
+            
+            showScreen('screen-game');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswering = false;
+            document.getElementById('btn-next-question').classList.add('hidden');
+            document.getElementById('game-explanation').classList.add('hidden');
+            
+            if (currentQIndex >= gameQuestions.length) {
+                endStage();
+                return;
+            }
+
+            const q = gameQuestions[currentQIndex];
+            document.getElementById('game-q-current').innerText = currentQIndex + 1;
+            document.getElementById('game-question-text').innerText = q.q;
+
+            const optContainer = document.getElementById('game-options');
+            optContainer.innerHTML = '';
+            
+            const labels = ['A', 'B', 'C', 'D'];
+            q.displayOptions.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "flex items-center p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-teal-400 hover:bg-teal-50 transition-all text-left shadow-sm";
+                btn.innerHTML = `<span class="w-8 h-8 rounded-full bg-gray-100 text-gray-700 font-bold flex items-center justify-center mr-3 shrink-0">${labels[idx]}</span> <span class="text-gray-800">${opt}</span>`;
+                btn.onclick = () => selectAnswer(idx, btn);
+                optContainer.appendChild(btn);
+            });
+
+            // Timer
+            timeLeft = state.settings.baseTime;
+            updateTimerUI();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerUI();
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            const bar = document.getElementById('game-timer-bar');
+            const text = document.getElementById('game-timer-text');
+            text.innerText = `${timeLeft}s`;
+            
+            const pct = (timeLeft / state.settings.baseTime) * 100;
+            bar.style.width = `${pct}%`;
+            
+            bar.className = 'timer-fill w-full';
+            if(pct <= 30) bar.classList.add('timer-danger');
+            else if(pct <= 60) bar.classList.add('timer-warning');
+        }
+
+        function handleTimeOut() {
+            if(isAnswering) return;
+            isAnswering = true;
+            sfx.wrong();
+            revealAnswer(-1); // -1 = timeout
+        }
+
+        function selectAnswer(selectedIndex, btnElement) {
+            if(isAnswering) return;
+            isAnswering = true;
+            clearInterval(timerInterval);
+            
+            const q = gameQuestions[currentQIndex];
+            const isCorrect = (selectedIndex === q.currentCorrectIndex);
+            
+            if(isCorrect) {
+                sfx.correct();
+                // Tính điểm dựa vào stage (1:10đ, 2:15đ, 3:20đ, 4:30đ)
+                let pts = 10;
+                if(currentStageObj.id === 2) pts = 15;
+                if(currentStageObj.id === 3) pts = 20;
+                if(currentStageObj.id === 4) pts = 30;
+                currentStageObj.score += pts;
+                document.getElementById('game-score').innerText = currentStageObj.score;
+            } else {
+                sfx.wrong();
+            }
+            
+            revealAnswer(selectedIndex);
+        }
+
+        function revealAnswer(selectedIndex) {
+            const q = gameQuestions[currentQIndex];
+            const btns = document.getElementById('game-options').children;
+            
+            for(let i=0; i<btns.length; i++) {
+                btns[i].disabled = true;
+                if(i === q.currentCorrectIndex) {
+                    btns[i].className = "flex items-center p-4 rounded-xl text-left correct-anim";
+                    btns[i].innerHTML = `<span class="w-8 h-8 rounded-full bg-green-500 text-white font-bold flex items-center justify-center mr-3 shrink-0"><i class="fas fa-check"></i></span> <span class="font-bold text-green-900">${q.displayOptions[i]}</span>`;
+                } else if (i === selectedIndex) {
+                    btns[i].className = "flex items-center p-4 rounded-xl text-left wrong-anim";
+                    btns[i].innerHTML = `<span class="w-8 h-8 rounded-full bg-red-500 text-white font-bold flex items-center justify-center mr-3 shrink-0"><i class="fas fa-times"></i></span> <span class="text-red-900">${q.displayOptions[i]}</span>`;
+                } else {
+                    btns[i].classList.add('opacity-50');
+                }
+            }
+
+            document.getElementById('game-exp-text').innerText = q.exp;
+            document.getElementById('game-explanation').classList.remove('hidden');
+            document.getElementById('btn-next-question').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQIndex++;
+            loadQuestion();
+        }
+
+        function confirmExitGame() {
+            clearInterval(timerInterval);
+            showScreen('screen-stages');
+        }
+
+        function endStage() {
+            clearInterval(timerInterval);
+            
+            let ptsPerQ = 10;
+            if(currentStageObj.id === 2) ptsPerQ = 15;
+            if(currentStageObj.id === 3) ptsPerQ = 20;
+            if(currentStageObj.id === 4) ptsPerQ = 30;
+            
+            const maxScore = currentStageObj.total * ptsPerQ;
+            const correctCount = currentStageObj.score / ptsPerQ;
+            const pct = (currentStageObj.score / maxScore) * 100;
+            
+            document.getElementById('stage-result-title').innerText = `Hoàn Thành Chặng ${currentStageObj.id}!`;
+            document.getElementById('stage-result-correct').innerText = `${correctCount}/${currentStageObj.total}`;
+            document.getElementById('stage-result-score').innerText = currentStageObj.score;
+            
+            const msgEl = document.getElementById('stage-result-msg');
+            const iconEl = document.getElementById('stage-result-icon');
+            
+            currentStageObj.passed = true;
+            
+            if(pct >= 60) {
+                msgEl.innerText = "Tuyệt vời! Bạn đã vượt qua chặng này.";
+                iconEl.innerText = "🎉";
+                
+                // Mở khóa chặng tiếp theo
+                if(currentStageObj.id < 4) {
+                    const nextStage = state.stagesStatus.find(s => s.id === currentStageObj.id + 1);
+                    if(nextStage && nextStage.locked) {
+                        nextStage.locked = false;
+                        sfx.unlock();
+                        msgEl.innerText += ` Chặng ${nextStage.id} đã được mở khóa!`;
+                    }
+                }
+            } else {
+                msgEl.innerText = "Chưa đạt đủ 60% điểm. Hãy ôn tập và thử lại nhé!";
+                iconEl.innerText = "💪";
+                currentStageObj.passed = false; // Đánh dấu chưa qua hoàn toàn
+            }
+            
+            // Cập nhật tổng điểm và lưu kết quả
+            updateStageUI(); 
+            checkAndUpdateLeaderboard();
+            
+            // Kiểm tra xem người chơi đã hoàn thành toàn bộ 4 chặng chưa
+            const allPassed = state.stagesStatus.every(s => s.passed);
+            if(allPassed && currentStageObj.id === 4 && pct >= 60) {
+                triggerVictory();
+            } else {
+                showScreen('screen-stage-result');
+            }
+        }
+
+        function checkAndUpdateLeaderboard() {
+            let total = state.stagesStatus.reduce((sum, s) => sum + s.score, 0);
+            if(total === 0) return;
+
+            let lb = JSON.parse(localStorage.getItem('chemLeaderboard')) || [];
+            
+            // Kiểm tra xem player này đã có trên bảng chưa
+            const existingIdx = lb.findIndex(x => x.name === state.player.name && x.class === state.player.class);
+            const dateStr = new Date().toLocaleDateString('vi-VN');
+
+            if(existingIdx >= 0) {
+                if(total > lb[existingIdx].score) {
+                    lb[existingIdx].score = total;
+                    lb[existingIdx].date = dateStr;
+                }
+            } else {
+                lb.push({ name: state.player.name, class: state.player.class, score: total, date: dateStr });
+            }
+            
+            lb.sort((a, b) => b.score - a.score);
+            localStorage.setItem('chemLeaderboard', JSON.stringify(lb));
+        }
+
+        function triggerVictory() {
+            let total = state.stagesStatus.reduce((sum, s) => sum + s.score, 0);
+            document.getElementById('victory-score').innerText = total;
+            
+            // Tính toán danh hiệu dựa trên điểm số (Tổng tối đa: 600 đ)
+            // Đạt tối thiểu 80% của 600 (= 480 điểm) để nhận "Nhà Vô Địch Hóa Học"
+            let title = "Bậc Thầy Tuần Hoàn"; 
+            if (total >= 480) { 
+                title = "Nhà Vô Địch Hóa Học";
+            }
+            document.getElementById('victory-title').innerText = title;
+            
+            sfx.win();
+            showScreen('screen-victory');
+            createConfetti();
+        }
+
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            container.innerHTML = '';
+            const colors = ['#fce18a', '#ff726d', '#b48def', '#f4306d', '#22c55e', '#3b82f6'];
+            
+            for(let i = 0; i < 80; i++) {
+                const conf = document.createElement('div');
+                conf.style.position = 'absolute';
+                conf.style.width = Math.random() * 10 + 5 + 'px';
+                conf.style.height = Math.random() * 20 + 10 + 'px';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = -30 + 'px';
+                conf.style.opacity = Math.random() + 0.5;
+                conf.style.transform = `rotate(${Math.random() * 360}deg)`;
+                
+                // Hiệu ứng thả rơi
+                const duration = Math.random() * 3 + 2;
+                conf.style.transition = `top ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform ${duration}s ease-in-out`;
+                
+                container.appendChild(conf);
+                
+                // Kích hoạt hiệu ứng rơi sau 1 khoảng delay nhỏ để DOM kịp render
+                setTimeout(() => {
+                    conf.style.top = '120vh';
+                    conf.style.transform = `rotate(${Math.random() * 720}deg)`;
+                }, 50);
+            }
+        }
+
+        function renderLeaderboard() {
+            const lb = JSON.parse(localStorage.getItem('chemLeaderboard')) || [];
+            const tbody = document.getElementById('leaderboard-body');
+            const emptyMsg = document.getElementById('leaderboard-empty');
+            
+            tbody.innerHTML = '';
+            if(lb.length === 0) {
+                emptyMsg.classList.remove('hidden');
+            } else {
+                emptyMsg.classList.add('hidden');
+                lb.forEach((entry, idx) => {
+                    const rankClass = idx === 0 ? 'text-yellow-500 font-bold text-xl' : (idx === 1 ? 'text-gray-400 font-bold' : (idx === 2 ? 'text-amber-600 font-bold' : 'text-gray-600'));
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-gray-100 hover:bg-gray-50";
+                    tr.innerHTML = `
+                        <td class="p-3 ${rankClass}">#${idx+1}</td>
+                        <td class="p-3 font-semibold text-gray-800">${entry.name}</td>
+                        <td class="p-3 text-gray-600">${entry.class}</td>
+                        <td class="p-3 text-right font-bold text-primary">${entry.score}</td>
+                        <td class="p-3 text-right text-sm text-gray-500">${entry.date}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function renderPeriodicTable() {
+            const container = document.getElementById('pt-container');
+            const fBlock = document.getElementById('pt-f-block');
+            if(container.innerHTML !== '') return; // Đã render
+
+            // Tạo lưới 7 chu kì x 18 nhóm cho khối s, p, d
+            for(let p = 1; p <= 7; p++) {
+                for(let g = 1; g <= 18; g++) {
+                    const elData = elementsData.find(e => e.period === p && e.group === g);
+                    
+                    const cell = document.createElement('div');
+                    cell.className = 'pt-element bg-white';
+                    
+                    if(elData) {
+                        cell.classList.add(`type-${elData.type}`);
+                        cell.innerHTML = `
+                            <span class="pt-z">${elData.z}</span>
+                            <span class="pt-sym">${elData.sym}</span>
+                        `;
+                        cell.onclick = () => showElementInfo(elData);
+                        cell.title = elData.name;
+                    } else {
+                        // Ô trống
+                        cell.style.visibility = 'hidden';
+                    }
+                    container.appendChild(cell);
+                }
+            }
+
+            // Gợi ý chỗ khối f (ở chu kì 6, nhóm 3)
+            const lanthanidePlaceholder = container.children[(6-1)*18 + (3-1)];
+            if(lanthanidePlaceholder) {
+                lanthanidePlaceholder.style.visibility = 'visible';
+                lanthanidePlaceholder.classList.add('type-lanthanide');
+                lanthanidePlaceholder.innerHTML = `<span class="pt-sym text-xs">57-71</span>`;
+                lanthanidePlaceholder.title = "Họ Lanthanide";
+            }
+            const actinidePlaceholder = container.children[(7-1)*18 + (3-1)];
+            if(actinidePlaceholder) {
+                actinidePlaceholder.style.visibility = 'visible';
+                actinidePlaceholder.classList.add('type-actinide');
+                actinidePlaceholder.innerHTML = `<span class="pt-sym text-xs">89-103</span>`;
+                actinidePlaceholder.title = "Họ Actinide";
+            }
+            
+            // Render demo khối f (nếu có data, hiện tại mảng ngắn chưa có, ta vẽ ô trống đại diện)
+            for(let i=57; i<=71; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'pt-element type-lanthanide';
+                cell.innerHTML = `<span class="pt-z">${i}</span><span class="pt-sym">-</span>`;
+                fBlock.appendChild(cell);
+            }
+            for(let i=89; i<=103; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'pt-element type-actinide';
+                cell.innerHTML = `<span class="pt-z">${i}</span><span class="pt-sym">-</span>`;
+                fBlock.appendChild(cell);
+            }
+        }
+
+        function showElementInfo(el) {
+            const panel = document.getElementById('pt-info-panel');
+            const box = document.getElementById('pt-info-box');
+            
+            document.getElementById('pt-info-z').innerText = el.z;
+            document.getElementById('pt-info-z-val').innerText = el.z;
+            document.getElementById('pt-info-sym').innerText = el.sym;
+            document.getElementById('pt-info-name').innerText = el.name;
+            document.getElementById('pt-info-period').innerText = el.period;
+            
+            // Xử lý hiển thị nhóm (Ví dụ: Group 1 -> IA)
+            let groupStr = el.group;
+            if(el.group <= 2) groupStr = `${['I','II'][el.group-1]}A (${el.group})`;
+            else if(el.group >= 13) groupStr = `${['III','IV','V','VI','VII','VIII'][el.group-13]}A (${el.group})`;
+            else groupStr = `Nhóm B (${el.group})`;
+            document.getElementById('pt-info-group').innerText = groupStr;
+            
+            const typeNames = {
+                'alkali': 'Kim loại kiềm', 'alkaline-earth': 'Kim loại kiềm thổ', 'transition': 'Kim loại chuyển tiếp',
+                'post-transition': 'Kim loại sau chuyển tiếp', 'metalloid': 'Á kim', 'nonmetal': 'Phi kim',
+                'halogen': 'Halogen', 'noble-gas': 'Khí hiếm'
+            };
+            document.getElementById('pt-info-type').innerText = typeNames[el.type] || 'Khác';
+            
+            // Cập nhật màu box
+            box.className = `w-24 h-24 rounded-lg flex flex-col justify-center items-center border-2 border-gray-800 text-gray-800 type-${el.type}`;
+            
+            panel.classList.remove('hidden');
+        }
+
+        function openTeacherLogin() {
+            showModal("Chế độ giáo viên", "Vui lòng nhập mật khẩu:", (pwd) => {
+                if(pwd === "12345") {
+                    document.getElementById('common-modal').classList.add('hidden');
+                    loadTeacherSettings();
+                    showScreen('screen-teacher');
+                } else {
+                    alert("Mật khẩu không đúng!");
+                }
+            }, true);
+        }
+
+        function loadTeacherSettings() {
+            document.getElementById('setting-sound').checked = state.settings.sound;
+            document.getElementById('setting-unlock-all').checked = state.settings.unlockAll;
+            document.getElementById('setting-time').value = state.settings.baseTime;
+            document.getElementById('teacher-q-count').innerText = questionBank.length;
+        }
+
+        function saveTeacherSettings() {
+            state.settings.sound = document.getElementById('setting-sound').checked;
+            state.settings.unlockAll = document.getElementById('setting-unlock-all').checked;
+            state.settings.baseTime = parseInt(document.getElementById('setting-time').value) || 20;
+            saveData();
+            showModal("Thành công", "Đã lưu cài đặt!", () => {
+                document.getElementById('common-modal').classList.add('hidden');
+            });
+        }
+
+        function clearLeaderboard() {
+            if(confirm("Bạn có chắc chắn muốn xóa toàn bộ dữ liệu người chơi? Hành động này không thể hoàn tác.")) {
+                localStorage.removeItem('chemLeaderboard');
+                // Reset state của player hiện tại
+                changePlayer();
+                showModal("Thành công", "Đã xóa dữ liệu bảng xếp hạng!");
+            }
+        }
+
+        function exportCSV() {
+            const lb = JSON.parse(localStorage.getItem('chemLeaderboard')) || [];
+            if(lb.length === 0) {
+                alert("Chưa có dữ liệu để xuất.");
+                return;
+            }
+            
+            let csvContent = "data:text/csv;charset=utf-8,%EF%BB%BF"; // Thêm BOM để Excel đọc đúng tiếng Việt
+            csvContent += "Hạng,Họ tên,Lớp,Điểm số,Ngày\n";
+            
+            lb.forEach((row, idx) => {
+                csvContent += `${idx+1},"${row.name}","${row.class}",${row.score},${row.date}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "KetQua_HoaHoc10.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+    </script>
+</body>
+</html>
